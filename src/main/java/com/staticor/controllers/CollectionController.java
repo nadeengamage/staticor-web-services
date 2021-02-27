@@ -1,6 +1,6 @@
 package com.staticor.controllers;
 
-import com.staticor.models.dtos.CollectionInitialization;
+import com.staticor.models.dtos.CollectionInitializationDto;
 import com.staticor.services.CollectionService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +22,7 @@ public class CollectionController extends Response {
     }
 
     @PostMapping("/collections")
-    public ResponseEntity<Object> create(@RequestBody CollectionInitialization collection) {
+    public ResponseEntity<Object> create(@RequestBody CollectionInitializationDto collection) {
 
         if (Objects.isNull(collection)) {
             return badRequest("Request body is required!");

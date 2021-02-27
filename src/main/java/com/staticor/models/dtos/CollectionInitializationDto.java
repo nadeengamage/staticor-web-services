@@ -1,6 +1,6 @@
 package com.staticor.models.dtos;
 
-public class CollectionInitialization {
+public class CollectionInitializationDto {
 
     private String userId;
     private String collectionName;

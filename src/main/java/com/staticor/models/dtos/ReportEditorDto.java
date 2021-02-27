@@ -3,7 +3,7 @@ package com.staticor.models.dtos;
 import java.util.List;
 import java.util.Map;
 
-public class ReportEditor {
+public class ReportEditorDto {
 
     private Long collectionId;
 
@@ -15,14 +15,14 @@ public class ReportEditor {
 
     private String error;
 
-    public ReportEditor() {
+    public ReportEditorDto() {
     }
 
-    public ReportEditor(String error) {
+    public ReportEditorDto(String error) {
         this.error = error;
     }
 
-    public ReportEditor(List<String> columns, List<Map<String, Object>> rows) {
+    public ReportEditorDto(List<String> columns, List<Map<String, Object>> rows) {
         getColumns().setLabels(columns);
         getRows().setRecords(rows);
     }

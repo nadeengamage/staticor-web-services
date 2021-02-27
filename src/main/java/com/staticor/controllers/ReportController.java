@@ -1,6 +1,7 @@
 package com.staticor.controllers;
 
-import com.staticor.models.dtos.ReportEditor;
+import com.staticor.models.dtos.ReportCreateDto;
+import com.staticor.models.dtos.ReportEditorDto;
 import com.staticor.services.ReportService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +28,7 @@ public class ReportController extends Response {
     }
 
     @PostMapping("/reports/editor")
-    public ResponseEntity<Object> editor(@RequestBody ReportEditor editor) {
+    public ResponseEntity<Object> editor(@RequestBody ReportEditorDto editor) {
 
             if (Objects.isNull(editor)) {
                 return badRequest("Request body is required!");
@@ -35,5 +36,16 @@ public class ReportController extends Response {
 
             LOGGER.info("Start querying sql!");
         return response(service.executeSqlQuery(editor));
+    }
+
+    @PostMapping("/reports/create-new-report")
+    public ResponseEntity<Object> createNewReport(@RequestBody ReportCreateDto createDto) {
+
+        if (Objects.isNull(createDto)) {
+            return badRequest("Request body is required!");
+        }
+
+        LOGGER.info("Start querying sql!");
+        return response(service.createNewReport(createDto));
     }
 }

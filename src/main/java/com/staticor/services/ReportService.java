@@ -1,10 +1,16 @@
 package com.staticor.services;
 
+import com.staticor.exceptions.ChartNotFoundException;
+import com.staticor.exceptions.CollectionNotFoundException;
 import com.staticor.models.collections.Collection;
 import com.staticor.models.connections.Connection;
-import com.staticor.models.dtos.ReportEditor;
-import com.staticor.repositories.CollectionRepository;
-import com.staticor.repositories.ReportRepository;
+import com.staticor.models.dtos.ReportCreateDto;
+import com.staticor.models.dtos.ReportEditorDto;
+import com.staticor.models.metrics.Chart;
+import com.staticor.models.reports.Report;
+import com.staticor.models.reports.ReportChart;
+import com.staticor.models.reports.ReportChartColumn;
+import com.staticor.repositories.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -28,13 +34,27 @@ public class ReportService extends ServiceResponse {
 
     private final ConnectionService connectionService;
 
-    public ReportService(ReportRepository repository, CollectionRepository collectionRepository, ConnectionService connectionService) {
+    private final ChartRepository chartRepository;
+
+    private final ReportChartRepository reportChartRepository;
+
+    private final ReportChartColumnRepository reportChartColumnRepository;
+
+    public ReportService(ReportRepository repository,
+                         CollectionRepository collectionRepository,
+                         ConnectionService connectionService,
+                         ChartRepository chartRepository,
+                         ReportChartRepository reportChartRepository,
+                         ReportChartColumnRepository reportChartColumnRepository) {
         this.repository = repository;
         this.collectionRepository = collectionRepository;
         this.connectionService = connectionService;
+        this.chartRepository = chartRepository;
+        this.reportChartRepository = reportChartRepository;
+        this.reportChartColumnRepository = reportChartColumnRepository;
     }
 
-    public ServiceResponse executeSqlQuery(ReportEditor editor) {
+    public ServiceResponse executeSqlQuery(ReportEditorDto editor) {
 
         List<String> columns = new ArrayList<>();
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -67,7 +87,7 @@ public class ReportService extends ServiceResponse {
             ps.close();
             con.close();
 
-            return success(true).code(200).result(new ReportEditor(columns, rows));
+            return success(true).code(200).result(new ReportEditorDto(columns, rows));
         } catch (SQLException e) {
             LOGGER.error("SQL editor error " + e.getSQLState());
             return success(false).code(500).message("Invalid SQL - " + e.getSQLState()).errors(e.getLocalizedMessage());
@@ -112,5 +132,35 @@ public class ReportService extends ServiceResponse {
             }
         }
         return found;
+    }
+
+    public ServiceResponse createNewReport(ReportCreateDto createDto) {
+        try {
+
+            Optional<Collection> collection = collectionRepository.findById(createDto.getCollectionId());
+            collection.orElseThrow(CollectionNotFoundException::new);
+
+            // create new report
+            Report report = new Report(createDto, collection.get());
+            repository.save(report);
+
+            // create report chart
+            Optional<Chart> chart = chartRepository.findById(createDto.getChartId());
+            chart.orElseThrow(ChartNotFoundException::new);
+
+            ReportChart reportChart = new ReportChart(createDto, report, chart.get());
+            reportChartRepository.save(reportChart);
+
+            // creat report chart columns
+            createDto.getColumns().forEach(col -> {
+                ReportChartColumn column = new ReportChartColumn(col, reportChart);
+                reportChartColumnRepository.save(column);
+            });
+
+            return success(true).code(200).message("Data Saved!");
+        } catch (Exception e) {
+            LOGGER.error("SQL editor error " + e.getMessage());
+            return success(false).code(500).errors(e.getLocalizedMessage());
+        }
     }
 }

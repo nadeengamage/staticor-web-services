@@ -3,7 +3,7 @@ package com.staticor.services;
 import com.staticor.models.collections.Collection;
 import com.staticor.models.connections.Connection;
 import com.staticor.models.connections.Database;
-import com.staticor.models.dtos.CollectionInitialization;
+import com.staticor.models.dtos.CollectionInitializationDto;
 import com.staticor.repositories.CollectionRepository;
 import com.staticor.repositories.DatabaseRepository;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +29,7 @@ public class CollectionService extends ServiceResponse {
         this.databaseRepository = databaseRepository;
     }
 
-    public ServiceResponse createCollection(CollectionInitialization init) {
+    public ServiceResponse createCollection(CollectionInitializationDto init) {
 
         try {
             Optional<Database> database = databaseRepository.findById(init.getDatabaseId());

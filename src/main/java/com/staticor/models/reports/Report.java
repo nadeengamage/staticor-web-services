@@ -1,17 +1,15 @@
 package com.staticor.models.reports;
 
+import com.staticor.models.DateAudit;
 import com.staticor.models.collections.Collection;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import com.staticor.models.dtos.ReportCreateDto;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Set;
 
 @Entity
 @Table(name = "tbl_reports")
-public class Report {
+public class Report extends DateAudit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -34,19 +32,14 @@ public class Report {
     @OneToMany(mappedBy = "report")
     private Set<ReportAttribute> attributes;
 
-    @Column(name = "created_by", nullable = false, updatable = false)
-    private String createdBy;
+    public Report() {
+    }
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Date createdAt;
-
-    @Column(name = "updated_by")
-    private String updatedBy;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public Report(ReportCreateDto createDto, Collection collection) {
+        this.name = createDto.getReportName().toUpperCase();
+        this.descriptions = createDto.getReportDesc().toUpperCase();
+        this.collection = collection;
+    }
 
     public Long getId() {
         return id;
@@ -94,37 +87,5 @@ public class Report {
 
     public void setAttributes(Set<ReportAttribute> attributes) {
         this.attributes = attributes;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
