@@ -1,5 +1,6 @@
 package com.staticor.models.reports;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.staticor.models.DateAudit;
 import com.staticor.models.dtos.ReportCreateDto;
 import com.staticor.models.enums.ChartSize;
@@ -25,15 +26,16 @@ public class ReportChart extends DateAudit {
     @Column(name = "report_chart_query", updatable = false, nullable = false)
     private String query;
 
-    @ManyToOne
-    @JoinColumn(name = "report_id", referencedColumnName = "report_id")
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE})
+    @JoinColumn(name = "report_id", referencedColumnName = "report_id", foreignKey = @ForeignKey(name = "fk_report_chart_1"))
     private Report report;
 
-    @ManyToOne
-    @JoinColumn(name = "chart_id", referencedColumnName = "chart_id")
+    @ManyToOne(fetch = FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE})
+    @JoinColumn(name = "chart_id", referencedColumnName = "chart_id", foreignKey = @ForeignKey(name = "fk_report_columns"))
     private Chart chart;
 
-    @OneToMany(mappedBy = "reportChart")
+    @OneToMany(mappedBy = "reportChart", fetch = FetchType.LAZY)
     private Set<ReportChartColumn> columns;
 
     public ReportChart() {

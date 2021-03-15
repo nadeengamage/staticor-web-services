@@ -14,10 +14,10 @@ public class Database extends DateAudit implements Serializable {
     @Column(name = "db_id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "db_name", updatable = false, nullable = false)
+    @Column(name = "db_name", updatable = false, nullable = false, unique = true)
     private String name;
 
-    @Column(name = "db_driver", updatable = false, nullable = false)
+    @Column(name = "db_driver", updatable = false, nullable = false, unique = true)
     private String driver;
 
     public Long getId() {

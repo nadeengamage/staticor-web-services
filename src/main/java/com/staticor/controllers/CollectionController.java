@@ -45,4 +45,42 @@ public class CollectionController extends Response {
         return response(service.getCollectionByUserId(id));
 
     }
+
+    @GetMapping("/get-collection-by-id/{id}")
+    public ResponseEntity<Object> getCollectionById(@PathVariable Long id) {
+
+        if (Objects.isNull(id)) {
+            return badRequest("Request body is required!");
+        }
+
+        LOGGER.info("Start get collection!");
+
+        return response(service.getCollectionById(id));
+
+    }
+
+    @GetMapping("/reports-by-collection-id/{id}")
+    public ResponseEntity<Object> getReportsByCollection(@PathVariable Long id) {
+
+        if (Objects.isNull(id)) {
+            return badRequest("Request body is required!");
+        }
+
+        LOGGER.info("Start get collection!");
+
+        return response(service.getReportsByCollectionId(id));
+
+    }
+
+    @PutMapping("/collections/{id}")
+    public ResponseEntity<Object> update(@RequestBody CollectionInitializationDto collection, @PathVariable Long id) {
+
+        if (Objects.isNull(collection)) {
+            return badRequest("Request body is required!");
+        }
+
+        LOGGER.info("Start update collection!");
+
+        return response(service.updateCollection(collection, id));
+    }
 }

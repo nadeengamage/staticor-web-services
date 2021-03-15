@@ -18,7 +18,7 @@ public class ReportCreateDto {
 
     private String sql;
 
-    private Set<String> columns;
+    private Set<ColumnCreateDto> columns;
 
     public Long getReportId() {
         return reportId;
@@ -76,11 +76,12 @@ public class ReportCreateDto {
         this.sql = sql;
     }
 
-    public Set<String> getColumns() {
+    public Set<ColumnCreateDto> getColumns() {
         return columns;
     }
 
-    public void setColumns(Set<String> columns) {
+    public void setColumns(Set<ColumnCreateDto> columns) {
         this.columns = columns;
     }
 }
+

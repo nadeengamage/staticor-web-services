@@ -15,13 +15,13 @@ public class Collection extends DateAudit implements Serializable {
     @Column(name = "col_id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "col_name", nullable = false)
+    @Column(name = "col_name", nullable = false, unique = true)
     private String name;
 
     @Column(name = "col_description")
     private String description;
 
-    @Column(name = "col_url")
+    @Column(name = "col_url", unique = true)
     private String url;
 
     private String userId;

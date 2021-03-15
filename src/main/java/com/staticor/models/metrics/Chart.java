@@ -13,7 +13,7 @@ public class Chart extends DateAudit {
     @Column(name = "chart_id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "chart_name", nullable = false)
+    @Column(name = "chart_name", nullable = false, unique = true)
     private String name;
 
     @Column(name = "chart_desc", nullable = false)

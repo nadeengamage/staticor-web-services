@@ -16,21 +16,18 @@ public class Report extends DateAudit {
     @Column(name = "report_id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "report_name")
+    @Column(name = "report_name", unique = true)
     private String name;
 
     @Column(name = "report_desc")
     private String descriptions;
 
     @ManyToOne
-    @JoinColumn(name = "report_col_id", referencedColumnName = "col_id")
+    @JoinColumn(name = "report_col_id", referencedColumnName = "col_id", foreignKey = @ForeignKey(name = "fk_collection_report"))
     private Collection collection;
 
-    @OneToMany(mappedBy = "chart")
+    @OneToMany(mappedBy = "report", fetch = FetchType.LAZY)
     private Set<ReportChart> charts;
-
-    @OneToMany(mappedBy = "report")
-    private Set<ReportAttribute> attributes;
 
     public Report() {
     }
@@ -79,13 +76,5 @@ public class Report extends DateAudit {
 
     public void setCharts(Set<ReportChart> charts) {
         this.charts = charts;
-    }
-
-    public Set<ReportAttribute> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(Set<ReportAttribute> attributes) {
-        this.attributes = attributes;
     }
 }

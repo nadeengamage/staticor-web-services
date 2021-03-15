@@ -2,10 +2,11 @@ package com.staticor.services;
 
 import com.staticor.exceptions.ChartNotFoundException;
 import com.staticor.exceptions.CollectionNotFoundException;
+import com.staticor.exceptions.ReportNotFoundException;
 import com.staticor.models.collections.Collection;
 import com.staticor.models.connections.Connection;
-import com.staticor.models.dtos.ReportCreateDto;
-import com.staticor.models.dtos.ReportEditorDto;
+import com.staticor.models.dtos.*;
+import com.staticor.models.enums.ChartSize;
 import com.staticor.models.metrics.Chart;
 import com.staticor.models.reports.Report;
 import com.staticor.models.reports.ReportChart;
@@ -20,6 +21,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ReportService extends ServiceResponse {
@@ -143,6 +147,7 @@ public class ReportService extends ServiceResponse {
             // create new report
             Report report = new Report(createDto, collection.get());
             repository.save(report);
+            createDto.setReportId(report.getId());
 
             // create report chart
             Optional<Chart> chart = chartRepository.findById(createDto.getChartId());
@@ -157,7 +162,185 @@ public class ReportService extends ServiceResponse {
                 reportChartColumnRepository.save(column);
             });
 
-            return success(true).code(200).message("Data Saved!");
+            return success(true).code(200).message("Data Saved!").result(createDto);
+        } catch (Exception e) {
+            LOGGER.error("SQL editor error " + e.getMessage());
+            return success(false).code(500).errors(e.getLocalizedMessage());
+        }
+    }
+
+    public ServiceResponse viewReport(ViewReportDto reportDto) {
+        try {
+
+            Optional<Report> report = repository.findById(reportDto.getReportId());
+            report.orElseThrow(ReportNotFoundException::new);
+
+            Report data = report.get();
+
+            // set charts
+            List<ReportChartDto> charts = new ArrayList<>();
+
+            Set<ReportChart> reportCharts = data.getCharts();
+
+            for (ReportChart c : reportCharts) {
+                ReportChartDto chartDto = new ReportChartDto();
+                chartDto.setType(c.getChart().getName());
+                chartDto.setSize(c.getSize().name());
+
+                // get data
+                chartDto.setLabels(getLabels(c.getQuery(), c, data.getCollection().getId()));
+                chartDto.setData(getDataSet(c.getQuery(), c, data.getCollection().getId()));
+                charts.add(chartDto);
+            }
+
+            ViewReportDto view = new ViewReportDto();
+            view.setReportId(data.getId());
+            view.setName(data.getName());
+            view.setDescription(data.getDescriptions());
+            view.setCharts(charts);
+
+            return success(true).code(200).message("Data Saved!").result(view);
+        } catch (Exception e) {
+            LOGGER.error("SQL editor error " + e.getMessage());
+            return success(false).code(500).errors(e.getLocalizedMessage());
+        }
+    }
+
+    public List<?> getLabels(String sql, ReportChart reportChart, Long collectionId) throws ChartNotFoundException, SQLException {
+        String[] from = sql.toLowerCase().split("from");
+
+        Optional<ReportChartColumn> reportChartColumn = reportChartColumnRepository.getByReportChartAndColumnAxis(reportChart, "X_1");
+        reportChartColumn.orElseThrow(ChartNotFoundException::new);
+
+        String newSql = String.format("select %s from %s", reportChartColumn.get().getColumn(), from[1]);
+
+        return getData(collectionId, newSql).get("rows");
+    }
+
+    public Map<Integer, List<?>> getDataSet(String sql, ReportChart reportChart, Long collectionId) throws ChartNotFoundException, SQLException {
+        String[] from = sql.toLowerCase().split("from");
+        Map<Integer, List<?>> data = new HashMap<>();
+
+        List<String> columns = reportChart.getColumns().stream()
+                .filter(col -> col.getColumnAxis().contains("Y_"))
+                .map(ReportChartColumn::getColumn)
+                .collect(Collectors.toList());
+
+        Stream<String> queries = columns.stream().map(col -> "select " + col.toLowerCase() + " from " + from[1]);
+        AtomicInteger idx = new AtomicInteger();
+        queries.forEach(q -> {
+            try {
+                data.put(idx.getAndIncrement(), getData(collectionId, q).get("rows"));
+            } catch (SQLException throwable) {
+                throw new IllegalArgumentException(throwable);
+            }
+        });
+
+        return data;
+    }
+
+    private Map<String, List<?>> getData(Long collectionId, String sql) throws SQLException {
+        List<String> columns = new ArrayList<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        Optional<Collection> collection = collectionRepository.findById(collectionId);
+        collection.orElseThrow(RuntimeException::new);
+
+        Connection connection = collection.get().getConnection();
+
+        String url = String.format("jdbc:mysql://%s:%s/%s?createIfNotExists=true&useSSL=false", connection.getHost(), connection.getPort(), connection.getDatabaseName());
+
+        java.sql.Connection con = connectionService.getConnection(url, connection);
+        PreparedStatement ps = con.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
+
+        // get columns
+        getColumns(rs, columns);
+
+        // get values
+        getRows(rs, columns, rows);
+
+        rs.close();
+        ps.close();
+        con.close();
+
+        return Map.of("rows", rows);
+    }
+
+    public ServiceResponse getReportById(Long id) {
+        try {
+            Optional<Report> report = repository.findById(id);
+            report.orElseThrow(ReportNotFoundException::new);
+
+            ReportEditorDto editorDto = new ReportEditorDto();
+            editorDto.setCollectionId(report.get().getCollection().getId());
+            editorDto.setSql(report.get().getCharts().iterator().next().getQuery());
+
+            ServiceResponse serviceResponse = executeSqlQuery(editorDto);
+            Object result = serviceResponse.getResult();
+
+            GetReportDto getReportDto = new GetReportDto();
+            getReportDto.setReport(report);
+            getReportDto.setEditor(result);
+
+            return success(true).code(200).result(getReportDto);
+        } catch (Exception e) {
+            LOGGER.error("SQL editor error " + e.getMessage());
+            return success(false).code(500).errors(e.getLocalizedMessage());
+        }
+    }
+
+    public ServiceResponse updateReport(ReportCreateDto createDto) {
+        try {
+            // create new report
+            Optional<Report> report = repository.findById(createDto.getReportId());
+            report.orElseThrow(ReportNotFoundException::new);
+
+            Report reportData = report.get();
+            reportData.setName(createDto.getReportName());
+            reportData.setDescriptions(createDto.getReportDesc());
+            repository.save(reportData);
+
+            createDto.setReportId(reportData.getId());
+
+            // create report chart
+            Optional<Chart> chart = chartRepository.findById(createDto.getChartId());
+            chart.orElseThrow(ChartNotFoundException::new);
+
+            ReportChart reportChart = reportChartRepository.findByReport(reportData);
+            reportChart.setChart(chart.get());
+            reportChart.setQuery(createDto.getSql());
+            reportChart.setSize(ChartSize.valueOf(createDto.getChartSize().toUpperCase()));
+            reportChartRepository.save(reportChart);
+
+            // creat report chart columns
+            for (ColumnCreateDto col : createDto.getColumns()) {
+                Optional<ReportChartColumn> column = reportChartColumnRepository.getByReportChartAndColumnAxis(reportChart, col.getAxis());
+                column.orElseThrow(ChartNotFoundException::new);
+
+                ReportChartColumn columnData = column.get();
+                columnData.setColumn(col.getName());
+                columnData.setColumnAxis(col.getAxis());
+                reportChartColumnRepository.save(columnData);
+            }
+
+            return success(true).code(200).message("Data Saved!").result(createDto);
+        } catch (Exception e) {
+            LOGGER.error("SQL editor error " + e.getMessage());
+            return success(false).code(500).errors(e.getLocalizedMessage());
+        }
+    }
+
+    public ServiceResponse deleteReport(Long id) {
+        try {
+            Optional<Report> report = repository.findById(id);
+            report.orElseThrow(ReportNotFoundException::new);
+
+            Report reportData = report.get();
+
+            repository.delete(reportData);
+
+            return success(true).code(200).message("Data deleted!");
         } catch (Exception e) {
             LOGGER.error("SQL editor error " + e.getMessage());
             return success(false).code(500).errors(e.getLocalizedMessage());

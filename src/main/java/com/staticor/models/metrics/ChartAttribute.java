@@ -1,15 +1,12 @@
 package com.staticor.models.metrics;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import com.staticor.models.DateAudit;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
-@Table(name = "tbl_chart_attributes")
-public class ChartAttribute {
+@Table(name = "tbl_chart_attributes", uniqueConstraints = @UniqueConstraint(columnNames = {"attr_chart_id", "attr_key"}))
+public class ChartAttribute extends DateAudit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -23,22 +20,8 @@ public class ChartAttribute {
     private Boolean validation;
 
     @ManyToOne
-    @JoinColumn(name = "attr_chart_id", referencedColumnName = "chart_id")
+    @JoinColumn(name = "attr_chart_id", referencedColumnName = "chart_id", foreignKey = @ForeignKey(name = "fk_chart_attribute"))
     private Chart chart;
-
-    @Column(name = "attr_created_by", nullable = false, updatable = false)
-    private String createdBy;
-
-    @CreatedDate
-    @Column(name = "attr_created_at", nullable = false, updatable = false)
-    private Date createdAt;
-
-    @Column(name = "attr_updated_by")
-    private String updatedBy;
-
-    @LastModifiedDate
-    @Column(name = "attr_updated_at")
-    private LocalDateTime updatedAt;
 
     public Long getId() {
         return id;
@@ -70,37 +53,5 @@ public class ChartAttribute {
 
     public void setChart(Chart chart) {
         this.chart = chart;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
