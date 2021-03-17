@@ -6,6 +6,8 @@ public class ColumnCreateDto {
 
     private String axis;
 
+    private String aliasName;
+
     public String getName() {
         return name;
     }
@@ -20,5 +22,13 @@ public class ColumnCreateDto {
 
     public void setAxis(String axis) {
         this.axis = axis;
+    }
+
+    public String getAliasName() {
+        return aliasName;
+    }
+
+    public void setAliasName(String aliasName) {
+        this.aliasName = aliasName;
     }
 }

@@ -13,6 +13,8 @@ public class ReportChartDto {
 
     private Map<Integer, List<?>> data;
 
+    private List<?> alias;
+
     public String getType() {
         return type;
     }
@@ -43,5 +45,13 @@ public class ReportChartDto {
 
     public void setData(Map<Integer, List<?>> data) {
         this.data = data;
+    }
+
+    public List<?> getAlias() {
+        return alias;
+    }
+
+    public void setAlias(List<?> alias) {
+        this.alias = alias;
     }
 }

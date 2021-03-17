@@ -110,6 +110,7 @@ public class CollectionService extends ServiceResponse {
                 createDto.setCollectionId(report.getCollection().getId());
                 createDto.setReportName(report.getName());
                 createDto.setReportDesc(report.getDescriptions());
+                createDto.setCreatedAt(report.getCreatedAt());
                 return createDto;
             });
 

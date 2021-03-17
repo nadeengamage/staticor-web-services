@@ -182,6 +182,8 @@ public class ReportService extends ServiceResponse {
 
             Set<ReportChart> reportCharts = data.getCharts();
 
+            List<String> alias = new ArrayList<>();
+
             for (ReportChart c : reportCharts) {
                 ReportChartDto chartDto = new ReportChartDto();
                 chartDto.setType(c.getChart().getName());
@@ -190,6 +192,18 @@ public class ReportService extends ServiceResponse {
                 // get data
                 chartDto.setLabels(getLabels(c.getQuery(), c, data.getCollection().getId()));
                 chartDto.setData(getDataSet(c.getQuery(), c, data.getCollection().getId()));
+
+                c.getColumns().forEach(al -> {
+                    if (al.getAliasName() != null && al.getColumnAxis().equalsIgnoreCase("Y_1")) {
+                        alias.add(0, al.getAliasName());
+                    }
+
+                    if (al.getAliasName() != null && al.getColumnAxis().equalsIgnoreCase("Y_2")) {
+                        alias.add(1, al.getAliasName());
+                    }
+                });
+
+                chartDto.setAlias(alias);
                 charts.add(chartDto);
             }
 
@@ -321,6 +335,7 @@ public class ReportService extends ServiceResponse {
                 ReportChartColumn columnData = column.get();
                 columnData.setColumn(col.getName());
                 columnData.setColumnAxis(col.getAxis());
+                columnData.setAliasName(col.getAliasName());
                 reportChartColumnRepository.save(columnData);
             }
 

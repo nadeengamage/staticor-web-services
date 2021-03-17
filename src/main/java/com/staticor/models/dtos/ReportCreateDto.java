@@ -1,5 +1,6 @@
 package com.staticor.models.dtos;
 
+import java.util.Date;
 import java.util.Set;
 
 public class ReportCreateDto {
@@ -19,6 +20,8 @@ public class ReportCreateDto {
     private String sql;
 
     private Set<ColumnCreateDto> columns;
+
+    private Date createdAt;
 
     public Long getReportId() {
         return reportId;
@@ -82,6 +85,14 @@ public class ReportCreateDto {
 
     public void setColumns(Set<ColumnCreateDto> columns) {
         this.columns = columns;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }
 

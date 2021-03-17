@@ -23,7 +23,7 @@ public class ReportChart extends DateAudit {
     @Column(name = "report_chart_size", updatable = false, nullable = false)
     private ChartSize size;
 
-    @Column(name = "report_chart_query", updatable = false, nullable = false)
+    @Column(name = "report_chart_query", length = 3000, updatable = false, nullable = false)
     private String query;
 
     @JsonIgnore

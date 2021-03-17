@@ -21,6 +21,8 @@ public class ReportChartColumn extends DateAudit {
     @Column(name = "column_axis")
     private String columnAxis;
 
+    private String aliasName;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "report_chart_id", referencedColumnName = "report_chart_id", foreignKey = @ForeignKey(name = "fk_report_chart_2"))
@@ -32,6 +34,7 @@ public class ReportChartColumn extends DateAudit {
     public ReportChartColumn(ColumnCreateDto columnCreateDto, ReportChart reportChart) {
         this.column = columnCreateDto.getName();
         this.columnAxis = columnCreateDto.getAxis();
+        this.aliasName = columnCreateDto.getAliasName();
         this.reportChart = reportChart;
     }
 
@@ -65,5 +68,13 @@ public class ReportChartColumn extends DateAudit {
 
     public void setReportChart(ReportChart reportChart) {
         this.reportChart = reportChart;
+    }
+
+    public String getAliasName() {
+        return aliasName;
+    }
+
+    public void setAliasName(String aliasName) {
+        this.aliasName = aliasName;
     }
 }
