@@ -58,38 +58,58 @@ public class ResourceService extends ServiceResponse {
                 charts.add(chartDto);
             }
 
+            List<List<String>> lists = wrapperData(charts);
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Document document = new Document();
             PdfWriter.getInstance(document, out);
 
             document.open();
-            PdfPTable table = new PdfPTable(charts.get(0).getLabels().size());
 
-            // report labels
-            charts.get(0).getLabels().forEach(headerTitle -> {
-                PdfPCell header = new PdfPCell();
-                Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
-                header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                header.setHorizontalAlignment(Element.ALIGN_CENTER);
-                header.setBorderWidth(2);
-                Map<String, Object> title = (HashMap<String, Object>) headerTitle;
-                Map.Entry<String, Object> entry = title.entrySet().iterator().next();
-                header.setPhrase(new Phrase(String.valueOf(entry.getValue()), headFont));
-                table.addCell(header);
-            });
+            // set report name
+            PdfPTable pageHeader = new PdfPTable(1);
+            PdfPCell pageHeaderCell = new PdfPCell(new Phrase(data.getName().toUpperCase()));
+            pageHeaderCell.setBorder(0);
+            pageHeaderCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            pageHeaderCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pageHeader.addCell(pageHeaderCell);
 
-            // report data
-            charts.get(0).getData().get(0).forEach(o -> {
-                Map<String, Object> d = (HashMap<String, Object>) o;
-                Map.Entry<String, Object> entry = d.entrySet().iterator().next();
-                PdfPCell cell = new PdfPCell(new Phrase(String.valueOf(entry.getValue())));
-                cell.setPaddingLeft(4);
-                cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                table.addCell(cell);
-            });
+            document.add(pageHeader);
 
-            document.add(table);
+            if (lists.size() > 0) {
+                PdfPTable table = new PdfPTable(lists.get(0).size());
+                table.setSpacingBefore(30f);
+                lists.forEach(values -> {
+                    for (int i = 0; i < values.size(); i++) {
+                        if (i == 0 && values.get(i) != null) {
+                            PdfPCell header = new PdfPCell();
+                            Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            header.setBorderWidth(2);
+                            header.setPhrase(new Phrase(values.get(i), headFont));
+                            table.addCell(header);
+                        }
+
+                        if (i == 1 && values.get(i) != null) {
+                            PdfPCell cell = new PdfPCell(new Phrase(values.get(i)));
+                            cell.setPaddingLeft(4);
+                            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            table.addCell(cell);
+                        }
+
+                        if (i == 2 && values.get(i) != null) {
+                            PdfPCell cell = new PdfPCell(new Phrase(values.get(i)));
+                            cell.setPaddingLeft(4);
+                            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            table.addCell(cell);
+                        }
+                    }
+                });
+                document.add(table);
+            }
             document.close();
 
             return success(true).code(200).message("Data Saved!").result(new ByteArrayInputStream(out.toByteArray()));
@@ -97,5 +117,27 @@ public class ResourceService extends ServiceResponse {
             LOGGER.error("SQL editor error " + e.getMessage());
             return success(false).code(500).errors(e.getLocalizedMessage());
         }
+    }
+
+    private List<List<String>> wrapperData(List<ReportChartDto> charts) {
+        List<List<String>> response = new ArrayList<>();
+        List<?> labels = charts.get(0).getLabels();
+        List<?> axis1 = charts.get(0).getData().get(0);
+        List<?> axis2 = null;
+        if (charts.get(0).getData().size() == 2) {
+            axis2 = charts.get(0).getData().get(1);
+        }
+
+        for (int i = 0; i < labels.size(); i++) {
+            HashMap<String, Object> label = (HashMap<String, Object>) labels.get(i);
+            HashMap<String, Object> axis1Data = (HashMap<String, Object>) axis1.get(i);
+            HashMap<String, Object> axis2Data = (axis2 != null ? (HashMap<String, Object>) axis2.get(i) : null);
+
+            response.add(i, Arrays.asList(label.entrySet().iterator().next().getValue().toString(),
+                    axis1Data.entrySet().iterator().next().getValue().toString(),
+                    (axis2Data != null ? axis2Data.entrySet().iterator().next().getValue().toString() : null)));
+        }
+
+        return response;
     }
 }
